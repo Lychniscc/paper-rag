@@ -1,0 +1,38 @@
+
+# API密钥和环境变量
+.env
+.env.*
+!.env.example
+
+# Python虚拟环境
+.venv/
+venv/
+
+# Python缓存
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 本地数据库
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# 实验评测结果（保存在本地，不提交）
+answer_evaluation/
+answer_evaluation_v3/
+evaluation_results/
+evaluation_20/
+evaluation_30/
+column_reports/
+
+# 临时文件
+*.log
+.DS_Store
+
+# IDE个人配置
+.vscode/
+
+# 原始论文PDF（避免误上传）
+*.pdf
