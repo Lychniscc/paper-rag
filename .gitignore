@@ -36,3 +36,6 @@ column_reports/
 
 # 原始论文PDF（避免误上传）
 *.pdf
+
+# 临时API诊断脚本
+test_api_502.py
