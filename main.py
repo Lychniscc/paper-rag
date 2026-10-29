@@ -5,6 +5,13 @@
 # ============================================================
 
 # ==================== 1. 导入依赖 ====================
+from database import (
+    init_db,
+    save_qa,
+    get_history,
+    get_history_detail,
+    delete_history,
+)
 
 import os
 import re
@@ -89,7 +96,8 @@ logger = logging.getLogger("paper-rag")
 app = FastAPI(
     title="论文智能问答RAG系统 v5.1.3"
 )
-
+# 初始化数据库
+init_db()
 # 保存当前论文数据
 # 当前仍然是单用户、内存版Demo
 document_state = None
@@ -2040,9 +2048,22 @@ async def rag_ask_v3(data: Question):
         time.perf_counter() - total_start
     )
 
-    # ===================== 10. 返回结果 =====================
+ # ==================== 10. 保存问答记录 ====================
+
+    history_id = save_qa(
+        question=question,
+        answer=answer,
+        model=MODEL_NAME,
+        sources=sources,
+        total_seconds=total_seconds,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens
+    )
+
+    # ===================== 11. 返回结果 =====================
 
     return {
+        "history_id": history_id,
         "question": question,
         "answer": answer,
 
@@ -2084,4 +2105,63 @@ async def rag_ask_v3(data: Question):
         },
 
         "message": "RAG-V3问答成功"
+    }
+
+# ========================================
+# SQLite问答历史API
+# ========================================
+
+@app.get("/history")
+def list_qa_history(limit: int = 20):
+
+    # 限制查询数量
+    if not 1 <= limit <= 100:
+        raise HTTPException(
+            status_code=422,
+            detail="limit必须在1到100之间"
+        )
+
+    return {
+        "records": get_history(limit)
+    }
+
+
+@app.get("/history/{record_id}")
+def read_qa_history(record_id: int):
+
+    if record_id <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail="记录ID必须大于0"
+        )
+
+    record = get_history_detail(
+        record_id
+    )
+
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail="问答记录不存在"
+        )
+
+    return record
+
+
+@app.delete("/history/{record_id}")
+def remove_qa_history(record_id: int):
+
+    deleted = delete_history(
+        record_id
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="问答记录不存在"
+        )
+
+    return {
+        "message": "删除成功",
+        "record_id": record_id
     }
